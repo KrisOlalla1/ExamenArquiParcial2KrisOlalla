@@ -6,6 +6,7 @@ import com.examen.branches_api.dto.BranchResponse;
 import com.examen.branches_api.dto.HolidayCheckResponse;
 import com.examen.branches_api.exception.BranchNotFoundException;
 import com.examen.branches_api.exception.HolidayNotFoundException;
+import com.examen.branches_api.mapper.BranchMapper;
 import com.examen.branches_api.model.Branch;
 import com.examen.branches_api.model.BranchHoliday;
 import com.examen.branches_api.repository.BranchRepository;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 public class BranchService {
 
     private final BranchRepository branchRepository;
+    private final BranchMapper branchMapper;
 
     @Transactional(readOnly = true)
     public List<BranchResponse> getAllBranches() {
@@ -34,7 +36,7 @@ public class BranchService {
         List<Branch> branches = this.branchRepository.findAll();
         log.info("Found {} branches", branches.size());
         return branches.stream()
-                .map(this::mapToResponse)
+                .map(this.branchMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -42,19 +44,11 @@ public class BranchService {
     public BranchResponse createBranch(BranchRequest request) {
         log.info("Creating new branch with name: {}", request.getName());
 
-        Branch branch = new Branch();
-        branch.setName(request.getName());
-        branch.setEmailAddress(request.getEmailAddress());
-        branch.setPhoneNumber(request.getPhoneNumber());
-        branch.setState("ACTIVE");
-        branch.setCreationDate(LocalDateTime.now());
-        branch.setLastModifiedDate(LocalDateTime.now());
-        branch.setBranchHolidays(new ArrayList<>());
-
+        Branch branch = this.branchMapper.toEntity(request);
         Branch savedBranch = this.branchRepository.save(branch);
-        log.info("Branch created successfully with ID: {}", savedBranch.getId());
 
-        return mapToResponse(savedBranch);
+        log.info("Branch created successfully with ID: {}", savedBranch.getId());
+        return this.branchMapper.toResponse(savedBranch);
     }
 
     @Transactional(readOnly = true)
@@ -63,7 +57,7 @@ public class BranchService {
         Branch branch = this.branchRepository.findById(id)
                 .orElseThrow(() -> new BranchNotFoundException("Branch not found with ID: " + id));
         log.info("Branch found: {}", branch.getName());
-        return mapToResponse(branch);
+        return this.branchMapper.toResponse(branch);
     }
 
     @Transactional
@@ -79,7 +73,7 @@ public class BranchService {
         Branch updatedBranch = this.branchRepository.save(branch);
         log.info("Phone number updated successfully for branch: {}", updatedBranch.getName());
 
-        return mapToResponse(updatedBranch);
+        return this.branchMapper.toResponse(updatedBranch);
     }
 
     @Transactional
@@ -102,7 +96,7 @@ public class BranchService {
         Branch updatedBranch = this.branchRepository.save(branch);
         log.info("Holidays added successfully to branch: {}", updatedBranch.getName());
 
-        return mapToResponse(updatedBranch);
+        return this.branchMapper.toResponse(updatedBranch);
     }
 
     @Transactional
@@ -126,7 +120,7 @@ public class BranchService {
         Branch updatedBranch = this.branchRepository.save(branch);
         log.info("Holiday deleted successfully from branch: {}", updatedBranch.getName());
 
-        return mapToResponse(updatedBranch);
+        return this.branchMapper.toResponse(updatedBranch);
     }
 
     @Transactional(readOnly = true)
@@ -165,18 +159,5 @@ public class BranchService {
                 branch.getName());
 
         return new HolidayCheckResponse(id, date, isHoliday, holidayName);
-    }
-
-    private BranchResponse mapToResponse(Branch branch) {
-        BranchResponse response = new BranchResponse();
-        response.setId(branch.getId());
-        response.setName(branch.getName());
-        response.setEmailAddress(branch.getEmailAddress());
-        response.setPhoneNumber(branch.getPhoneNumber());
-        response.setState(branch.getState());
-        response.setCreationDate(branch.getCreationDate());
-        response.setLastModifiedDate(branch.getLastModifiedDate());
-        response.setBranchHolidays(branch.getBranchHolidays());
-        return response;
     }
 }

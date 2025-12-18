@@ -7,6 +7,11 @@ import com.examen.branches_api.dto.HolidayCheckResponse;
 import com.examen.branches_api.dto.PhoneUpdateRequest;
 import com.examen.branches_api.model.BranchHoliday;
 import com.examen.branches_api.service.BranchService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,22 +23,19 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
 
-/**
- * Controlador REST para gestionar sucursales y sus feriados.
- * Base URL: /api/branches_api/v1/branch
- */
 @Slf4j
 @RestController
 @RequestMapping("/api/branches_api/v1/branch")
 @AllArgsConstructor
+@Tag(name = "Branch Management", description = "API para gestionar sucursales y sus feriados")
 public class BranchController {
 
     private final BranchService branchService;
 
-    /**
-     * Endpoint 1: Obtener todas las sucursales
-     * GET /api/branches_api/v1/branch
-     */
+    @Operation(summary = "Obtener todas las sucursales", description = "Retorna un listado de todas las sucursales registradas")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de sucursales obtenida exitosamente")
+    })
     @GetMapping
     public ResponseEntity<List<BranchResponse>> getAllBranches() {
         log.info("API: GET /api/branches_api/v1/branch - Fetching all branches");
@@ -42,10 +44,11 @@ public class BranchController {
         return ResponseEntity.ok(branches);
     }
 
-    /**
-     * Endpoint 2: Crear una nueva sucursal (sin feriados)
-     * POST /api/branches_api/v1/branch
-     */
+    @Operation(summary = "Crear una nueva sucursal", description = "Crea una nueva sucursal sin feriados")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Sucursal creada exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos")
+    })
     @PostMapping
     public ResponseEntity<BranchResponse> createBranch(
             @Valid @RequestBody BranchRequest request) {
@@ -55,25 +58,29 @@ public class BranchController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    /**
-     * Endpoint 3: Obtener sucursal por ID
-     * GET /api/branches_api/v1/branch/{id}
-     */
+    @Operation(summary = "Obtener sucursal por ID", description = "Retorna una sucursal específica por su ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Sucursal encontrada"),
+            @ApiResponse(responseCode = "404", description = "Sucursal no encontrada")
+    })
     @GetMapping("/{id}")
-    public ResponseEntity<BranchResponse> getBranchById(@PathVariable String id) {
+    public ResponseEntity<BranchResponse> getBranchById(
+            @Parameter(description = "ID de la sucursal") @PathVariable String id) {
         log.info("API: GET /api/branches_api/v1/branch/{} - Fetching branch", id);
         BranchResponse response = this.branchService.getBranchById(id);
         log.info("API: Branch found: {}", response.getName());
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Endpoint 4: Modificar teléfono de sucursal
-     * PATCH /api/branches_api/v1/branch/{id}/phone
-     */
+    @Operation(summary = "Modificar teléfono de sucursal", description = "Actualiza el número de teléfono de una sucursal y su fecha de modificación")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Teléfono actualizado exitosamente"),
+            @ApiResponse(responseCode = "404", description = "Sucursal no encontrada"),
+            @ApiResponse(responseCode = "400", description = "Número de teléfono inválido")
+    })
     @PatchMapping("/{id}/phone")
     public ResponseEntity<BranchResponse> updatePhoneNumber(
-            @PathVariable String id,
+            @Parameter(description = "ID de la sucursal") @PathVariable String id,
             @Valid @RequestBody PhoneUpdateRequest request) {
         log.info("API: PATCH /api/branches_api/v1/branch/{}/phone - Updating phone number", id);
         BranchResponse response = this.branchService.updatePhoneNumber(id, request.getPhoneNumber());
@@ -81,13 +88,15 @@ public class BranchController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Endpoint 5: Crear feriados para una sucursal
-     * POST /api/branches_api/v1/branch/{id}/holiday
-     */
+    @Operation(summary = "Crear feriados para una sucursal", description = "Agrega uno o más feriados a una sucursal existente")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Feriados creados exitosamente"),
+            @ApiResponse(responseCode = "404", description = "Sucursal no encontrada"),
+            @ApiResponse(responseCode = "400", description = "Datos de feriados inválidos")
+    })
     @PostMapping("/{id}/holiday")
     public ResponseEntity<BranchResponse> addHolidays(
-            @PathVariable String id,
+            @Parameter(description = "ID de la sucursal") @PathVariable String id,
             @Valid @RequestBody List<BranchHolidayRequest> holidays) {
         log.info("API: POST /api/branches_api/v1/branch/{}/holiday - Adding {} holidays", id, holidays.size());
         BranchResponse response = this.branchService.addHolidays(id, holidays);
@@ -95,40 +104,44 @@ public class BranchController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    /**
-     * Endpoint 6: Eliminar feriado de una sucursal
-     * DELETE /api/branches_api/v1/branch/{id}/holiday/{date}
-     */
+    @Operation(summary = "Eliminar feriado de una sucursal", description = "Elimina un feriado específico por su fecha de una sucursal")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Feriado eliminado exitosamente"),
+            @ApiResponse(responseCode = "404", description = "Sucursal o feriado no encontrado")
+    })
     @DeleteMapping("/{id}/holiday/{date}")
     public ResponseEntity<BranchResponse> deleteHoliday(
-            @PathVariable String id,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @Parameter(description = "ID de la sucursal") @PathVariable String id,
+            @Parameter(description = "Fecha del feriado (formato: YYYY-MM-DD)") @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         log.info("API: DELETE /api/branches_api/v1/branch/{}/holiday/{} - Deleting holiday", id, date);
         BranchResponse response = this.branchService.deleteHoliday(id, date);
         log.info("API: Holiday deleted from branch: {}", response.getName());
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Endpoint 7: Obtener todos los feriados de una sucursal
-     * GET /api/branches_api/v1/branch/{id}/holiday
-     */
+    @Operation(summary = "Obtener todos los feriados de una sucursal", description = "Retorna la lista de feriados de una sucursal específica")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de feriados obtenida exitosamente"),
+            @ApiResponse(responseCode = "404", description = "Sucursal no encontrada")
+    })
     @GetMapping("/{id}/holiday")
-    public ResponseEntity<List<BranchHoliday>> getHolidays(@PathVariable String id) {
+    public ResponseEntity<List<BranchHoliday>> getHolidays(
+            @Parameter(description = "ID de la sucursal") @PathVariable String id) {
         log.info("API: GET /api/branches_api/v1/branch/{}/holiday - Fetching holidays", id);
         List<BranchHoliday> holidays = this.branchService.getHolidays(id);
         log.info("API: Returning {} holidays", holidays.size());
         return ResponseEntity.ok(holidays);
     }
 
-    /**
-     * Endpoint 8: Verificar si una fecha es feriado
-     * GET /api/branches_api/v1/branch/{id}/holiday/check?date=YYYY-MM-DD
-     */
+    @Operation(summary = "Verificar si una fecha es feriado", description = "Verifica si una fecha específica es o no un feriado en una sucursal")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Verificación completada"),
+            @ApiResponse(responseCode = "404", description = "Sucursal no encontrada")
+    })
     @GetMapping("/{id}/holiday/check")
     public ResponseEntity<HolidayCheckResponse> isHoliday(
-            @PathVariable String id,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @Parameter(description = "ID de la sucursal") @PathVariable String id,
+            @Parameter(description = "Fecha a verificar (formato: YYYY-MM-DD)") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         log.info("API: GET /api/branches_api/v1/branch/{}/holiday/check?date={} - Checking if holiday", id, date);
         HolidayCheckResponse response = this.branchService.isHoliday(id, date);
         log.info("API: Date {} is {} for branch {}", date, response.isHoliday() ? "a holiday" : "not a holiday", id);
