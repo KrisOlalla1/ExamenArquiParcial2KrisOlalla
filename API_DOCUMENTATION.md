@@ -5,7 +5,18 @@
 **Proyecto:** Gestión de Sucursales y Feriados - BanQuito  
 **Framework:** Spring Boot 3.5.8  
 **Base de Datos:** MongoDB  
-**Puerto:** 8080
+**Puerto:** 8080  
+**Documentación OpenAPI/Swagger:** http://localhost:8080/swagger-ui.html
+
+---
+
+## Documentación Interactiva (Swagger UI)
+
+La API cuenta con documentación interactiva generada automáticamente con **OpenAPI/Swagger**.
+
+Para acceder:
+1. Ejecutar la aplicación: `mvn spring-boot:run`
+2. Abrir en el navegador: http://localhost:8080/swagger-ui.html
 
 ---
 
