@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: branches_api
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/banquito
+      database: banquito
+
+server:
+  port: 8080
